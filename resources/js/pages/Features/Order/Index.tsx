@@ -221,7 +221,7 @@ export default function Index({ items, filters }: PageProps<{ items: Pagination<
                                 <Link href={route('orders.calendar')}>
                                     <Button variant="outline" className="gap-2">
                                         <Calendar className="h-4 w-4 text-orange-600" />
-                                        Jadwal Pengerjaan
+                                        Jadwal
                                     </Button>
                                 </Link>
                                 <Link href={route('orders.create')}>

@@ -312,7 +312,7 @@ export default function FormPage({ auth, item, products = [], customers = [] }: 
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={(item ? 'Edit' : 'Create') + ' Order'} />
 
-            <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+            <div className="p-4 sm:p-6 lg:p-8 w-full space-y-6">
                 {/* Header Title */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-4">
                     <div>
@@ -345,7 +345,7 @@ export default function FormPage({ auth, item, products = [], customers = [] }: 
                         <Link href={route('orders.calendar')}>
                             <Button variant="outline" size="sm" className="gap-2">
                                 <Calendar className="h-4 w-4 text-orange-600" />
-                                Kalender Pengerjaan
+                                Jadwal
                             </Button>
                         </Link>
                     </div>

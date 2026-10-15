@@ -24,7 +24,7 @@ interface Props extends PageProps {
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: route('dashboard') },
     { title: 'Pesanan', href: route('orders.index') },
-    { title: 'Jadwal Pengerjaan', href: route('orders.calendar') },
+    { title: 'Jadwal', href: route('orders.calendar') },
 ];
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string }> = {
@@ -164,15 +164,15 @@ export default function CalendarPage({ auth, orders = [] }: Props) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Jadwal Pengerjaan & Antrian Produksi" />
+            <Head title="Jadwal" />
 
-            <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+            <div className="p-4 sm:p-6 lg:p-8 space-y-6 w-full">
                 {/* Header Action Bar */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-4">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
                             <CalendarIcon className="h-6 w-6 text-[#FF6500]" />
-                            Jadwal Pengerjaan & Produksi
+                            Jadwal
                         </h1>
                         <p className="text-sm text-muted-foreground mt-1">
                             Kalender khusus admin untuk memantau deadline pesanan cetak dan prioritas pengerjaan mesin.

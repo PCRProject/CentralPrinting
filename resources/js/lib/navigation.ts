@@ -29,7 +29,7 @@ export const commerceNavItems: NavItem[] = [
         featureKey: 'orders',
     },
     {
-        title: 'Jadwal Pengerjaan',
+        title: 'Jadwal',
         href: route('orders.calendar', undefined, false),
         icon: Calendar,
         featureKey: 'orders',
