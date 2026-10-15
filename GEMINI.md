@@ -172,6 +172,14 @@ Proyek ini menggunakan alur kerja semi-otomatis untuk mencatat perkembangan.
 
 *(Entri baru akan ditambahkan di sini oleh Asisten AI)*
 
+### 15 Oktober 2026
+- **Pengaturan: Menonaktifkan Fitur Pelanggan & Fokus Portal Admin**
+    -   **Backend (Routing):** Mengalihkan rute utama (`/`) ke login atau dashboard admin. Menutup registrasi pelanggan baru dengan mengarahkan `register` ke `login`.
+    -   **Backend (Otorisasi):** Membatasi rute keranjang belanja (`cart.*`), toko (`shop.index`), portofolio, detail produk (`products.show`), dan pesanan/checkout (`purchase`) khusus peran admin (`role:admin`).
+    -   **Backend (Autentikasi):** Menolak login akun non-admin pada `AuthenticatedSessionController` dengan pesan peringatan pemeliharaan sistem.
+    -   **Frontend:** Memperbarui antarmuka login menjadi Portal Administrator dan menyembunyikan tautan pendaftaran pelanggan.
+
+
 ### 19 Oktober 2025
 - **Perbaikan: Crash Halaman Daftar Pesanan Admin**
     -   **Masalah:** Halaman daftar pesanan (`/orders`) di panel admin mengalami *crash* dengan *error* JavaScript `TypeError: Cannot read properties of undefined (reading 'data')`.

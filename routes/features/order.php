@@ -20,8 +20,8 @@ Route::prefix('shipping')->group(function () {
     Route::post('/all-options', [RajaOngkirController::class, 'getAllShippingOptions']);
 });
 
-// Rute untuk Customer (checkout, my-orders, payment update)
-Route::middleware(['auth'])->group(function () {
+// Rute untuk Customer (checkout, my-orders, payment update) - Dibatasi khusus Admin sementara waktu
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/purchase', [OrderController::class, 'create'])->name('checkout.create');
     Route::post('/purchase', [OrderController::class, 'store'])->name('checkout.store');
     

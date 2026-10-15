@@ -40,8 +40,14 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended(route('dashboard', absolute: false));
         }
 
-        // Arahkan customer ke halaman utama
-        return redirect()->intended('/');
+        // Akses pelanggan dinonaktifkan sementara (fokus admin)
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return back()->withErrors([
+            'email' => 'Akses pelanggan sedang dinonaktifkan sementara untuk pemeliharaan sistem. Hanya akun administrator yang dapat masuk.',
+        ]);
     }
 
     /**
@@ -54,6 +60,6 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect()->route('login');
     }
 }

@@ -16,5 +16,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('products')->name(
     Route::post('/{product:id_produk}/toggle-status', [ProductController::class, 'toggleStatus'])->name('toggleStatus.post');
 });
 
-// Rute untuk publik (tidak perlu login) - DITEMPATKAN DI BAWAH SETELAH RUTE ADMIN
-Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
+// Rute detail produk (dibatasi khusus Admin selama pemeliharaan fitur pelanggan)
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
+});

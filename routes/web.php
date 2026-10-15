@@ -5,30 +5,37 @@ use App\Http\Controllers\Features\CartController;
 use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
+// Halaman Utama: dialihkan ke Dashboard (jika admin) atau Login (fitur publik/pelanggan dinonaktifkan sementara)
+Route::get('/', function () {
+    if (auth()->check() && auth()->user()->role === 'admin') {
+        return redirect()->route('dashboard');
+    }
+    return redirect()->route('login');
+})->name('welcome');
 
-Route::get('/api/products/{product:slug}', [ProductController::class, 'quickView'])->name('products.quickView');
-Route::get('/api/cart/{cartItemId}', [CartController::class, 'getItemDetails'])->name('cart.itemDetails');
+// Rute Publik & Pelanggan: Dinonaktifkan sementara untuk pengunjung umum (dibatasi khusus Admin)
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/api/products/{product:slug}', [ProductController::class, 'quickView'])->name('products.quickView');
+    Route::get('/api/cart/{cartItemId}', [CartController::class, 'getItemDetails'])->name('cart.itemDetails');
 
-// Rute untuk publik (tidak perlu login)
+    // Rute untuk Keranjang Belanja
+    Route::prefix('cart')->name('cart.')->group(function () {
+        Route::get('/', [CartController::class, 'index'])->name('index');
+        Route::post('/', [CartController::class, 'store'])->name('store');
+        Route::patch('/{cartItemId}', [CartController::class, 'update'])->name('update');
+        Route::post('/{cartItemId}/update', [CartController::class, 'update'])->name('update.post');
+        Route::delete('/{cartItemId}', [CartController::class, 'destroy'])->name('destroy');
+        Route::post('/{cartItemId}/remove', [CartController::class, 'destroy'])->name('destroy.remove');
+    });
 
-// Rute untuk Keranjang Belanja
-Route::prefix('cart')->name('cart.')->group(function () {
-    Route::get('/', [CartController::class, 'index'])->name('index');
-    Route::post('/', [CartController::class, 'store'])->name('store');
-    Route::patch('/{cartItemId}', [CartController::class, 'update'])->name('update');
-    Route::post('/{cartItemId}/update', [CartController::class, 'update'])->name('update.post');
-    Route::delete('/{cartItemId}', [CartController::class, 'destroy'])->name('destroy');
-    Route::post('/{cartItemId}/remove', [CartController::class, 'destroy'])->name('destroy.remove');
+    // Rute untuk Halaman Toko "Produk & Jasa"
+    Route::get('/produk-jasa', [ProductController::class, 'shopIndex'])
+         ->name('shop.index');
+
+    // Rute untuk Portofolio
+    Route::get('/portfolio', [\App\Features\Portfolio\PortfolioController::class, 'index'])
+        ->name('portfolio.index');
 });
-
-// Rute untuk Halaman Toko "Produk & Jasa"
-Route::get('/produk-jasa', [ProductController::class, 'shopIndex'])
-     ->name('shop.index');
-
-// Rute untuk Portofolio
-Route::get('/portfolio', [\App\Features\Portfolio\PortfolioController::class, 'index'])
-    ->name('portfolio.index');
 
 // Rute khusus Admin
 Route::middleware(['auth', 'role:admin'])->group(function () {
