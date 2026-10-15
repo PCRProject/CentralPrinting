@@ -1,3 +1,4 @@
+import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import laravel from 'laravel-vite-plugin';
@@ -15,7 +16,7 @@ export default defineConfig(({ command }) => ({
         // Wayfinder only runs in dev mode (needs php artisan + database)
         // In build mode, we use pre-generated stub files instead
         ...(command === 'serve'
-            ? [require('@laravel/vite-plugin-wayfinder').wayfinder({ formVariants: true })]
+            ? [wayfinder({ formVariants: true })]
             : []),
     ],
     resolve: {
