@@ -40,7 +40,7 @@ return [
 
         'public' => [
             'driver' => 'local',
-            'root' => is_dir(base_path('../public_html')) ? base_path('../public_html/storage') : public_path('storage'),
+            'root' => is_dir(base_path('../public_html')) ? base_path('../public_html/storage') : storage_path('app/public'),
             'url' => env('APP_URL').'/storage',
             'visibility' => 'public',
             'throw' => false,
