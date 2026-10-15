@@ -7,6 +7,8 @@ import { type User } from '@/types';
 import { Link, router } from '@inertiajs/react';
 import { LogOut, Settings } from 'lucide-react';
 
+import { route } from 'ziggy-js';
+
 interface UserMenuContentProps {
     user: User;
 }
@@ -19,6 +21,10 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
         router.flushAll();
     };
 
+    const settingsHref = user.role === 'admin' 
+        ? route('settings.features.index', undefined, false) 
+        : edit();
+
     return (
         <>
             <DropdownMenuLabel className="p-0 font-normal">
@@ -29,7 +35,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
                 <DropdownMenuItem asChild>
-                    <Link className="block w-full" href={edit()} as="button" prefetch onClick={cleanup}>
+                    <Link className="block w-full" href={settingsHref} as="button" prefetch onClick={cleanup}>
                         <Settings className="mr-2" />
                         Settings
                     </Link>

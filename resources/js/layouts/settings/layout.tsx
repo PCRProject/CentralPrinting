@@ -11,13 +11,8 @@ import { type PropsWithChildren } from 'react';
 import { route } from 'ziggy-js';
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
-    // When server-side rendering, we only render the layout on the client...
-    if (typeof window === 'undefined') {
-        return null;
-    }
-
     const { auth } = usePage<SharedData>().props;
-    const currentPath = window.location.pathname;
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
 
     const navItems: NavItem[] = [
         {

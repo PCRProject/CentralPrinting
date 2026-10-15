@@ -29,7 +29,7 @@ interface FeatureItem {
 }
 
 interface FeaturesPageProps {
-    featuresList: FeatureItem[];
+    featuresList?: FeatureItem[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -48,7 +48,7 @@ const featureIcons: Record<string, typeof Globe> = {
     stores: MapPin,
 };
 
-export default function FeaturesSettings({ featuresList }: FeaturesPageProps) {
+export default function FeaturesSettings({ featuresList = [] }: FeaturesPageProps) {
     const [loadingKey, setLoadingKey] = useState<string | null>(null);
 
     const handleToggle = (key: string, currentEnabled: boolean, label: string) => {

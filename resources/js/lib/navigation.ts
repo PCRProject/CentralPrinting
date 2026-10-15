@@ -54,7 +54,11 @@ export const operationalNavItems: NavItem[] = [
         icon: MapPin,
         featureKey: 'stores',
     },
-    // Future: Reports, Settings etc.
+    {
+        title: 'Pengaturan Fitur',
+        href: route('settings.features.index', undefined, false),
+        icon: Settings,
+    },
 ];
 
 export const mainNavItems: NavItem[] = [
