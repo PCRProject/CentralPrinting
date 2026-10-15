@@ -7,8 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
 import { request } from '@/routes/password';
-import { Form, Head } from '@inertiajs/react';
+import { type SharedData } from '@/types';
+import { Form, Head, usePage } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
+import { route } from 'ziggy-js';
 
 interface LoginProps {
     status?: string;
@@ -16,9 +18,19 @@ interface LoginProps {
 }
 
 export default function Login({ status, canResetPassword }: LoginProps) {
+    const { features } = usePage<SharedData & { features?: Record<string, boolean> }>().props;
+    const isCustomerPortalEnabled = features?.customer_portal ?? false;
+
     return (
-        <AuthLayout title="Portal Administrator" description="Masuk dengan akun admin untuk mengelola sistem Central Printing">
-            <Head title="Admin Log in" />
+        <AuthLayout
+            title={isCustomerPortalEnabled ? "Masuk ke Akun Anda" : "Portal Administrator"}
+            description={
+                isCustomerPortalEnabled
+                    ? "Masukkan email dan kata sandi Anda untuk melanjutkan"
+                    : "Masuk dengan akun admin untuk mengelola sistem Central Printing"
+            }
+        >
+            <Head title={isCustomerPortalEnabled ? "Log in" : "Admin Log in"} />
 
             <Form {...AuthenticatedSessionController.store.form()} resetOnSuccess={['password']} className="flex flex-col gap-6">
                 {({ processing, errors }) => (
@@ -71,9 +83,18 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             </Button>
                         </div>
 
-                        <div className="rounded-lg bg-orange-50 p-3 text-center text-xs text-orange-800 border border-orange-200">
-                            Fitur publik/pelanggan sedang dinonaktifkan untuk pemeliharaan sistem.
-                        </div>
+                        {isCustomerPortalEnabled ? (
+                            <div className="text-center text-sm text-muted-foreground">
+                                Belum punya akun?{' '}
+                                <TextLink href={route('register')} tabIndex={5}>
+                                    Daftar sekarang
+                                </TextLink>
+                            </div>
+                        ) : (
+                            <div className="rounded-lg bg-orange-50 p-3 text-center text-xs text-orange-800 border border-orange-200">
+                                Fitur publik/pelanggan sedang dinonaktifkan untuk pemeliharaan sistem.
+                            </div>
+                        )}
                     </>
                 )}
             </Form>

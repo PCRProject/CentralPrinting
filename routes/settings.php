@@ -21,4 +21,10 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/appearance');
     })->name('appearance');
+
+    // Pengaturan Fitur Aplikasi (Khusus Admin)
+    Route::middleware('role:admin')->group(function () {
+        Route::get('settings/features', [\App\Http\Controllers\Settings\FeatureSettingController::class, 'index'])->name('settings.features.index');
+        Route::patch('settings/features', [\App\Http\Controllers\Settings\FeatureSettingController::class, 'update'])->name('settings.features.update');
+    });
 });

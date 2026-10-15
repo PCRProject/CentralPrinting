@@ -11,14 +11,14 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    // Pendaftaran akun pelanggan dinonaktifkan sementara (fokus portal admin)
-    Route::get('register', function () {
-        return redirect()->route('login');
-    })->name('register');
+    // Pendaftaran akun pelanggan: diproteksi oleh middleware feature:customer_portal
+    Route::middleware('feature:customer_portal')->group(function () {
+        Route::get('register', [RegisteredUserController::class, 'create'])
+            ->name('register');
 
-    Route::post('register', function () {
-        return redirect()->route('login');
-    })->name('register.store');
+        Route::post('register', [RegisteredUserController::class, 'store'])
+            ->name('register.store');
+    });
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');

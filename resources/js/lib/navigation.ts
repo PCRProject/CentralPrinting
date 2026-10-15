@@ -25,21 +25,25 @@ export const commerceNavItems: NavItem[] = [
         title: 'Pesanan',
         href: route('orders.index', undefined, false),
         icon: ShoppingBag,
+        featureKey: 'orders',
     },
     {
         title: 'Produk',
         href: route('products.index', undefined, false),
         icon: Package,
+        featureKey: 'products',
     },
     {
         title: 'Pelanggan',
         href: route('customers.index', undefined, false),
         icon: Users,
+        featureKey: 'customers',
     },
     {
         title: 'Ulasan',
         href: route('reviews.index', undefined, false),
         icon: Star,
+        featureKey: 'reviews',
     },
 ];
 
@@ -48,6 +52,7 @@ export const operationalNavItems: NavItem[] = [
         title: 'Toko & Lokasi',
         href: route('stores.index', undefined, false),
         icon: MapPin,
+        featureKey: 'stores',
     },
     // Future: Reports, Settings etc.
 ];

@@ -40,7 +40,12 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended(route('dashboard', absolute: false));
         }
 
-        // Akses pelanggan dinonaktifkan sementara (fokus admin)
+        // Jika portal pelanggan aktif, pelanggan boleh login
+        if (\App\Models\AppSetting::isEnabled('customer_portal')) {
+            return redirect()->intended('/');
+        }
+
+        // Jika portal pelanggan dinonaktifkan, tolak akses login pelanggan
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

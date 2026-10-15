@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 // Rute untuk admin (perlu login dan peran admin)
 // DITEMPATKAN DI ATAS UNTUK PRIORITAS
-Route::middleware(['auth', 'verified', 'role:admin'])->prefix('products')->name('products.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin', 'feature:products'])->prefix('products')->name('products.')->group(function () {
     Route::get('/', [ProductController::class, 'index'])->name('index');
     Route::get('/create', [ProductController::class, 'create'])->name('create');
     Route::post('/', [ProductController::class, 'store'])->name('store');
@@ -16,7 +16,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('products')->name(
     Route::post('/{product:id_produk}/toggle-status', [ProductController::class, 'toggleStatus'])->name('toggleStatus.post');
 });
 
-// Rute detail produk (dibatasi khusus Admin selama pemeliharaan fitur pelanggan)
-Route::middleware(['auth', 'role:admin'])->group(function () {
+// Rute detail produk (dikontrol oleh saklar fitur products)
+Route::middleware(['feature:products'])->group(function () {
     Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
 });

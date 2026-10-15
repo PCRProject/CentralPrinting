@@ -4,22 +4,11 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { appearance } from '@/routes';
 import { edit as editPassword } from '@/routes/password';
-import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
+import { type NavItem, type SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
+import { Sliders } from 'lucide-react';
 import { type PropsWithChildren } from 'react';
-
-const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Password',
-        href: editPassword(),
-        icon: null,
-    },
-    {
-        title: 'Appearance',
-        href: appearance(),
-        icon: null,
-    },
-];
+import { route } from 'ziggy-js';
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
     // When server-side rendering, we only render the layout on the client...
@@ -27,16 +16,39 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
         return null;
     }
 
+    const { auth } = usePage<SharedData>().props;
     const currentPath = window.location.pathname;
+
+    const navItems: NavItem[] = [
+        {
+            title: 'Password',
+            href: editPassword(),
+            icon: null,
+        },
+        {
+            title: 'Appearance',
+            href: appearance(),
+            icon: null,
+        },
+        ...(auth?.user?.role === 'admin'
+            ? [
+                  {
+                      title: 'Fitur Aplikasi',
+                      href: route('settings.features.index', undefined, false),
+                      icon: Sliders,
+                  },
+              ]
+            : []),
+    ];
 
     return (
         <div className="px-4 py-6">
-            <Heading title="Settings" description="Manage your profile and account settings" />
+            <Heading title="Settings" description="Manage your profile, account and application features" />
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">
                     <nav className="flex flex-col space-y-1 space-x-0">
-                        {sidebarNavItems.map((item, index) => (
+                        {navItems.map((item, index) => (
                             <Button
                                 key={`${typeof item.href === 'string' ? item.href : item.href.url}-${index}`}
                                 size="sm"

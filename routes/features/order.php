@@ -20,8 +20,8 @@ Route::prefix('shipping')->group(function () {
     Route::post('/all-options', [RajaOngkirController::class, 'getAllShippingOptions']);
 });
 
-// Rute untuk Customer (checkout, my-orders, payment update) - Dibatasi khusus Admin sementara waktu
-Route::middleware(['auth', 'role:admin'])->group(function () {
+// Rute untuk Customer (checkout, my-orders, payment update)
+Route::middleware(['auth', 'feature:orders'])->group(function () {
     Route::get('/purchase', [OrderController::class, 'create'])->name('checkout.create');
     Route::post('/purchase', [OrderController::class, 'store'])->name('checkout.store');
     
@@ -46,7 +46,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
 // Rute untuk Admin (CRUD orders - index, create, edit, update, destroy)
 // Exclude 'show' karena sudah didefinisikan di atas untuk customer
-Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin', 'feature:orders'])->group(function () {
     Route::post('/orders/{order}/update-admin', [OrderController::class, 'update'])
         ->name('orders.update.post');
     

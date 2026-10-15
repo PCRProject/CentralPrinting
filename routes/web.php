@@ -5,16 +5,22 @@ use App\Http\Controllers\Features\CartController;
 use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
 
-// Halaman Utama: dialihkan ke Dashboard (jika admin) atau Login (fitur publik/pelanggan dinonaktifkan sementara)
+use App\Models\AppSetting;
+
+// Halaman Utama: dinamis berdasarkan saklar customer_portal di Pengaturan Admin
 Route::get('/', function () {
+    if (AppSetting::isEnabled('customer_portal')) {
+        return app(WelcomeController::class)->index();
+    }
+
     if (auth()->check() && auth()->user()->role === 'admin') {
         return redirect()->route('dashboard');
     }
     return redirect()->route('login');
 })->name('welcome');
 
-// Rute Publik & Pelanggan: Dinonaktifkan sementara untuk pengunjung umum (dibatasi khusus Admin)
-Route::middleware(['auth', 'role:admin'])->group(function () {
+// Rute Publik & Pelanggan: Dikontrol oleh saklar fitur customer_portal
+Route::middleware(['feature:customer_portal'])->group(function () {
     Route::get('/api/products/{product:slug}', [ProductController::class, 'quickView'])->name('products.quickView');
     Route::get('/api/cart/{cartItemId}', [CartController::class, 'getItemDetails'])->name('cart.itemDetails');
 

@@ -4,7 +4,7 @@ use App\Features\Store\StoreController;
 use Illuminate\Support\Facades\Route;
 
 // Admin routes for store management
-Route::middleware(['auth', 'role:admin'])->prefix('stores')->group(function () {
+Route::middleware(['auth', 'role:admin', 'feature:stores'])->prefix('stores')->group(function () {
     Route::get('/', [StoreController::class, 'index'])->name('stores.index');
     Route::get('/create', [StoreController::class, 'create'])->name('stores.create');
     Route::post('/', [StoreController::class, 'store'])->name('stores.store');
@@ -16,4 +16,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('stores')->group(function () {
 });
 
 // Public route for store locations
-Route::get('/lokasi-toko', [StoreController::class, 'locations'])->name('locations.index');
+Route::middleware(['feature:stores'])->group(function () {
+    Route::get('/lokasi-toko', [StoreController::class, 'locations'])->name('locations.index');
+});

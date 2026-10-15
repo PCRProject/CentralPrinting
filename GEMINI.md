@@ -173,6 +173,16 @@ Proyek ini menggunakan alur kerja semi-otomatis untuk mencatat perkembangan.
 *(Entri baru akan ditambahkan di sini oleh Asisten AI)*
 
 ### 15 Oktober 2026
+- **Fitur Baru: Sistem Saklar Fitur Dinamis (Dynamic Feature Flags) di Pengaturan Admin**
+    -   **Database:** Membuat migrasi tabel `app_settings` untuk menyimpan status switch aktif/nonaktif setiap modul sistem (`customer_portal`, `orders`, `products`, `customers`, `reviews`, `stores`).
+    -   **Backend (Model & Cache):** Membuat model `AppSetting` dengan caching otomatis untuk pengecekan cepat `AppSetting::isEnabled()`.
+    -   **Backend (Middleware):** Membuat middleware `CheckFeatureEnabled` (`feature:{key}`) yang mencegat dan mengalihkan akses rute jika suatu fitur dinonaktifkan.
+    -   **Backend (Inertia Global Props):** Membagikan status semua fitur secara realtime ke seluruh halaman frontend melalui `HandleInertiaRequests`.
+    -   **Backend (Routing & Controller):** Menambahkan `FeatureSettingController` dan rute `/settings/features` khusus admin untuk memodifikasi status fitur.
+    -   **Frontend (Pengaturan Admin):** Menambahkan halaman `/settings/features` dengan komponen Shadcn Card, Badge, dan Switch interaktif, lengkap dengan notifikasi toast.
+    -   **Frontend (Sidebar & Navigasi):** Memperbarui `AppSidebar` dan `navigation.ts` agar otomatis menyembunyikan atau menampilkan item menu (Pesanan, Produk, Pelanggan, Ulasan, Lokasi Toko) sesuai status saklar di pengaturan.
+    -   **Frontend (Login Adaptif):** Menyesuaikan halaman login agar otomatis berganti antara mode umum dan portal admin sesuai status saklar `customer_portal`.
+
 - **Pengaturan: Menonaktifkan Fitur Pelanggan & Fokus Portal Admin**
     -   **Backend (Routing):** Mengalihkan rute utama (`/`) ke login atau dashboard admin. Menutup registrasi pelanggan baru dengan mengarahkan `register` ke `login`.
     -   **Backend (Otorisasi):** Membatasi rute keranjang belanja (`cart.*`), toko (`shop.index`), portofolio, detail produk (`products.show`), dan pesanan/checkout (`purchase`) khusus peran admin (`role:admin`).

@@ -42,7 +42,9 @@ class HandleInertiaRequests extends Middleware
             ],
             'flash' => [
                 'message' => fn() => $request->session()->get('message'),
+                'error' => fn() => $request->session()->get('error'),
             ],
+            'features' => fn() => \App\Models\AppSetting::getFeatures(),
             'cart' => function () {
                 $cart = session('cart', ['items' => [], 'subtotal' => 0]);
                 // Mengubah logika untuk menghitung jumlah item unik, bukan total kuantitas
