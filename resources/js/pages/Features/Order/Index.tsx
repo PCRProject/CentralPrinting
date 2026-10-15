@@ -424,9 +424,15 @@ export default function Index({ items, filters }: PageProps<{ items: Pagination<
                                                                         Cetak Nota / Invoice
                                                                     </Link>
                                                                 </DropdownMenuItem>
+                                                                <DropdownMenuItem asChild>
+                                                                    <Link href={route('orders.edit', order.id)}>
+                                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                                        Edit Pesanan
+                                                                    </Link>
+                                                                </DropdownMenuItem>
                                                                 <DropdownMenuItem onClick={() => openUpdateModal(order)}>
                                                                     <Pencil className="mr-2 h-4 w-4" />
-                                                                    Kelola Pesanan
+                                                                    Quick Update Status
                                                                 </DropdownMenuItem>
                                                                 {/* Tombol hapus dihapus - pesanan tidak dapat dihapus */}
                                                             </DropdownMenuContent>

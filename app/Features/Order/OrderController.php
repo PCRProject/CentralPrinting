@@ -456,8 +456,30 @@ class OrderController extends Controller
      */
     public function edit(Order $order)
     {
+        $products = Product::where('is_active', true)
+            ->orWhereNull('is_active')
+            ->with(['category', 'attributeValues.attribute', 'designTemplates'])
+            ->get();
+
+        $customers = Customer::with('user:id,name,email')
+            ->get()
+            ->map(function ($c) {
+                return [
+                    'id' => $c->id,
+                    'name' => $c->user->name ?? 'Pelanggan #' . $c->id,
+                    'email' => $c->user->email ?? '',
+                    'phone_number' => $c->phone_number ?? '',
+                    'address' => $c->address ?? '',
+                    'city' => $c->city ?? '',
+                ];
+            });
+
+        $order->load(['customer.user', 'items.product.category']);
+
         return Inertia::render('Features/Order/FormPage', [
             'item' => $order,
+            'products' => $products,
+            'customers' => $customers,
         ]);
     }
 
