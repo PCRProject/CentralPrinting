@@ -128,6 +128,55 @@ export default function FormPage({ auth, item, products = [], customers = [] }: 
         return tomorrow.toISOString().split('T')[0];
     }, []);
 
+    // Helper: Mengelompokkan attribute_values berdasarkan nama attribute
+    const getProductAttributeGroups = (prod?: ProductItem): Record<string, ProductAttributeValue[]> => {
+        if (!prod || !prod.attribute_values) return {};
+        const groups: Record<string, ProductAttributeValue[]> = {};
+        prod.attribute_values.forEach((av) => {
+            const groupName = av.attribute?.name || 'Varian';
+            if (!groups[groupName]) {
+                groups[groupName] = [];
+            }
+            groups[groupName].push(av);
+        });
+        return groups;
+    };
+
+    // Helper: Menghitung harga satuan dan memilih varian default
+    const calculateItemPriceAndDefaultVariants = (
+        prod?: ProductItem,
+        existingVariants?: Record<string, string>
+    ): { variants: Record<string, string>; unitPrice: number; basePrice: number; variantDelta: number } => {
+        if (!prod) return { variants: {}, unitPrice: 0, basePrice: 0, variantDelta: 0 };
+        const basePrice = Number(prod.harga || 0);
+        const groups = getProductAttributeGroups(prod);
+        const variants: Record<string, string> = {};
+        let variantDelta = 0;
+
+        Object.entries(groups).forEach(([groupName, options]) => {
+            if (options.length > 0) {
+                const preferredVal = existingVariants?.[groupName];
+                const matchedOption = options.find((opt) => opt.value === preferredVal) || options[0];
+                variants[groupName] = matchedOption.value;
+                if (matchedOption.pivot?.price) {
+                    variantDelta += Number(matchedOption.pivot.price);
+                }
+            }
+        });
+
+        return {
+            variants,
+            basePrice,
+            variantDelta,
+            unitPrice: basePrice + variantDelta,
+        };
+    };
+
+    // Varian default dan harga satuan untuk produk pertama
+    const initialFirstProductCalc = useMemo(() => {
+        return calculateItemPriceAndDefaultVariants(products[0]);
+    }, [products]);
+
     // SYNC_FORM_DATA_START
     const { data, setData, post, processing, errors } = useForm({
         // Fields for Edit Mode
@@ -150,8 +199,8 @@ export default function FormPage({ auth, item, products = [], customers = [] }: 
             {
                 product_id: products[0]?.id_produk || '',
                 quantity: 1,
-                price: Number(products[0]?.harga || 0),
-                variant: {},
+                price: initialFirstProductCalc.unitPrice,
+                variant: initialFirstProductCalc.variants,
                 note: '',
                 design_type: 'none' as 'upload' | 'template' | 'none',
                 design_template_id: null,
@@ -205,13 +254,15 @@ export default function FormPage({ auth, item, products = [], customers = [] }: 
     // Helper functions for create mode
     const handleAddItem = () => {
         const firstProd = products[0];
+        const calc = calculateItemPriceAndDefaultVariants(firstProd);
+
         setData('items', [
             ...data.items,
             {
                 product_id: firstProd?.id_produk || '',
                 quantity: 1,
-                price: Number(firstProd?.harga || 0),
-                variant: {},
+                price: calc.unitPrice,
+                variant: calc.variants,
                 note: '',
                 design_type: 'none',
                 design_template_id: null,
@@ -237,12 +288,15 @@ export default function FormPage({ auth, item, products = [], customers = [] }: 
         const prod = products.find((p) => p.id_produk === productId);
         if (!prod) return;
 
+        // Otomatis kalkulasi varian default & harga satuan produk baru
+        const calc = calculateItemPriceAndDefaultVariants(prod);
+
         const updated = [...data.items];
         updated[index] = {
             ...updated[index],
             product_id: productId,
-            price: Number(prod.harga || 0),
-            variant: {},
+            price: calc.unitPrice,
+            variant: calc.variants,
             design_type: 'none',
             design_template_id: null,
             design_template_name: '',
@@ -253,29 +307,18 @@ export default function FormPage({ auth, item, products = [], customers = [] }: 
         setData('items', updated);
     };
 
-    const handleVariantChange = (itemIndex: number, attrName: string, value: string, priceDelta: number) => {
+    const handleVariantChange = (itemIndex: number, attrName: string, value: string) => {
         const updated = [...data.items];
         const currentItem = updated[itemIndex];
         const newVariants = { ...currentItem.variant, [attrName]: value };
 
         const prod = products.find((p) => p.id_produk === currentItem.product_id);
-        let basePrice = Number(prod?.harga || 0);
-
-        if (prod?.attribute_values) {
-            Object.entries(newVariants).forEach(([k, v]) => {
-                const matchAttr = prod.attribute_values?.find(
-                    (av) => (av.attribute?.name || '') === k && av.value === v
-                );
-                if (matchAttr?.pivot?.price) {
-                    basePrice += Number(matchAttr.pivot.price);
-                }
-            });
-        }
+        const calc = calculateItemPriceAndDefaultVariants(prod, newVariants);
 
         updated[itemIndex] = {
             ...currentItem,
             variant: newVariants,
-            price: basePrice,
+            price: calc.unitPrice,
         };
         setData('items', updated);
     };
@@ -728,43 +771,86 @@ export default function FormPage({ auth, item, products = [], customers = [] }: 
                                                     </div>
 
                                                     {/* Dynamic Attributes / Variants */}
-                                                    {Object.keys(attributeGroups).length > 0 && (
-                                                        <div className="p-3 bg-muted/30 rounded-lg space-y-3 border">
-                                                            <p className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                                                                Spesifikasi / Varian Produk
-                                                            </p>
-                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    {Object.keys(attributeGroups).length > 0 ? (
+                                                        <div className="p-3.5 bg-orange-50/30 rounded-xl space-y-3.5 border border-orange-200/60 shadow-2xs">
+                                                            <div className="flex items-center justify-between border-b border-orange-200/50 pb-2">
+                                                                <p className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+                                                                    <Sparkles className="h-3.5 w-3.5 text-orange-600" />
+                                                                    Pilihan Varian & Spesifikasi Produk
+                                                                </p>
+                                                                <Badge variant="outline" className="bg-white text-orange-700 border-orange-200 text-[10px] font-semibold">
+                                                                    {Object.keys(attributeGroups).length} Varian Tersedia
+                                                                </Badge>
+                                                            </div>
+
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                                                 {Object.entries(attributeGroups).map(([groupName, values]) => (
-                                                                    <div key={groupName} className="space-y-1">
-                                                                        <Label className="text-xs font-medium">{groupName}</Label>
+                                                                    <div key={groupName} className="space-y-1.5">
+                                                                        <Label className="text-xs font-semibold text-gray-700 flex items-center justify-between">
+                                                                            <span>{groupName}</span>
+                                                                            {item.variant[groupName] && (
+                                                                                <span className="text-[10px] font-normal text-muted-foreground truncate max-w-[120px]">
+                                                                                    {item.variant[groupName]}
+                                                                                </span>
+                                                                            )}
+                                                                        </Label>
                                                                         <Select
                                                                             value={item.variant[groupName] || ''}
                                                                             onValueChange={(val) => {
-                                                                                const matched = values.find((v) => v.value === val);
-                                                                                handleVariantChange(
-                                                                                    idx,
-                                                                                    groupName,
-                                                                                    val,
-                                                                                    Number(matched?.pivot?.price || 0)
-                                                                                );
+                                                                                handleVariantChange(idx, groupName, val);
                                                                             }}
                                                                         >
-                                                                            <SelectTrigger className="h-9 text-xs">
+                                                                            <SelectTrigger className="h-9 text-xs bg-white border-orange-200/70 focus:ring-orange-500">
                                                                                 <SelectValue placeholder={`Pilih ${groupName}`} />
                                                                             </SelectTrigger>
                                                                             <SelectContent>
-                                                                                {values.map((v) => (
-                                                                                    <SelectItem key={v.id} value={v.value} className="text-xs">
-                                                                                        {v.value}
-                                                                                        {Number(v.pivot?.price) > 0 &&
-                                                                                            ` (+${formatRp(Number(v.pivot?.price))})`}
-                                                                                    </SelectItem>
-                                                                                ))}
+                                                                                {values.map((v) => {
+                                                                                    const addPrice = Number(v.pivot?.price || 0);
+                                                                                    return (
+                                                                                        <SelectItem key={v.id} value={v.value} className="text-xs">
+                                                                                            <div className="flex items-center justify-between w-full gap-2">
+                                                                                                <span>{v.value}</span>
+                                                                                                {addPrice > 0 ? (
+                                                                                                    <span className="font-semibold text-orange-600 ml-1">
+                                                                                                        (+{formatRp(addPrice)})
+                                                                                                    </span>
+                                                                                                ) : (
+                                                                                                    <span className="text-muted-foreground ml-1">
+                                                                                                        (Rp 0)
+                                                                                                    </span>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        </SelectItem>
+                                                                                    );
+                                                                                })}
                                                                             </SelectContent>
                                                                         </Select>
                                                                     </div>
                                                                 ))}
                                                             </div>
+
+                                                            {/* Live Price Formula Badge */}
+                                                            <div className="flex flex-wrap items-center gap-1.5 pt-1.5 text-xs text-muted-foreground border-t border-orange-200/40">
+                                                                <span className="font-medium text-gray-700">Rincian Harga Satuan:</span>
+                                                                <Badge variant="outline" className="bg-white text-gray-700 font-normal text-[11px]">
+                                                                    Dasar: {formatRp(Number(selectedProd?.harga || 0))}
+                                                                </Badge>
+                                                                <span className="text-gray-400 font-bold">+</span>
+                                                                <Badge variant="outline" className="bg-white text-orange-700 border-orange-200 font-normal text-[11px]">
+                                                                    Varian: +{formatRp(Math.max(0, Number(item.price) - Number(selectedProd?.harga || 0)))}
+                                                                </Badge>
+                                                                <span className="text-gray-400 font-bold">=</span>
+                                                                <Badge className="bg-orange-600 hover:bg-orange-600 text-white font-bold text-[11px]">
+                                                                    {formatRp(Number(item.price))} / pcs
+                                                                </Badge>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-3 bg-muted/30 rounded-lg text-xs text-muted-foreground border flex items-center gap-2">
+                                                            <AlertCircle className="h-4 w-4 text-gray-400 shrink-0" />
+                                                            <span>
+                                                                Produk ini tidak memiliki konfigurasi varian otomatis. Harga satuan menggunakan harga standar produk ({formatRp(Number(selectedProd?.harga || 0))}).
+                                                            </span>
                                                         </div>
                                                     )}
 
