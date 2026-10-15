@@ -44,9 +44,13 @@ Route::middleware(['auth', 'feature:orders'])->group(function () {
         ->name('orders.complete');
 });
 
-// Rute untuk Admin (CRUD orders - index, create, edit, update, destroy)
-// Exclude 'show' karena sudah didefinisikan di atas untuk customer
 Route::middleware(['auth', 'verified', 'role:admin', 'feature:orders'])->group(function () {
+    Route::get('/orders/calendar', [OrderController::class, 'calendar'])
+        ->name('orders.calendar');
+
+    Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice'])
+        ->name('orders.invoice');
+
     Route::post('/orders/{order}/update-admin', [OrderController::class, 'update'])
         ->name('orders.update.post');
     

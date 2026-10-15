@@ -15,7 +15,7 @@ import {
 import {
     Package, Truck, CreditCard, User, MapPin,
     Download, FileIcon, ChevronLeft, Calendar,
-    Mail, Phone, Info, Eye, Clock, CheckCircle, XCircle, Wallet, Loader2
+    Mail, Phone, Info, Eye, Clock, CheckCircle, XCircle, Wallet, Loader2, Printer
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -201,6 +201,12 @@ export default function Show({ order }: PageProps<{ order: Order }>) {
                             <CreditCard className="h-3 w-3 mr-1" />
                             Pembayaran: {paymentStatusConfig.label}
                         </Badge>
+                        <Link href={route('orders.invoice', order.id)}>
+                            <Button size="sm" variant="outline" className="gap-1.5 border-orange-200 hover:bg-orange-50 text-orange-700">
+                                <Printer className="h-4 w-4" />
+                                Cetak Nota
+                            </Button>
+                        </Link>
                         {/* Tombol Bayar Sekarang - hanya tampil jika unpaid */}
                         {canPayOrder && (
                             <Button

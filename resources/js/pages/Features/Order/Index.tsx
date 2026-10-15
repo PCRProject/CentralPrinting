@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
     MoreHorizontal, Eye, Pencil, Search, Package, Truck, CheckCircle, XCircle, Clock, CreditCard, Ban,
-    Loader2, Lock
+    Loader2, Lock, Plus, Calendar, Printer
 } from 'lucide-react';
 import debounce from 'lodash.debounce';
 import { Order, OrderStatus, PaymentStatus } from './types';
@@ -212,8 +212,26 @@ export default function Index({ items, filters }: PageProps<{ items: Pagination<
             <div className="p-4 sm:p-6 lg:p-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Kelola Pesanan</CardTitle>
-                        <CardDescription>Lihat dan kelola semua pesanan pelanggan.</CardDescription>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                                <CardTitle>Kelola Pesanan</CardTitle>
+                                <CardDescription>Lihat dan kelola pesanan pelanggan, cetak nota, dan jadwal pengerjaan.</CardDescription>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Link href={route('orders.calendar')}>
+                                    <Button variant="outline" className="gap-2">
+                                        <Calendar className="h-4 w-4 text-orange-600" />
+                                        Jadwal Pengerjaan
+                                    </Button>
+                                </Link>
+                                <Link href={route('orders.create')}>
+                                    <Button className="bg-[#FF6500] hover:bg-[#e05900] text-white gap-2 font-medium">
+                                        <Plus className="h-4 w-4" />
+                                        Buat Pesanan Baru
+                                    </Button>
+                                </Link>
+                            </div>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         {/* Filters */}
@@ -398,6 +416,12 @@ export default function Index({ items, filters }: PageProps<{ items: Pagination<
                                                                     <Link href={route('orders.show', order.id)}>
                                                                         <Eye className="mr-2 h-4 w-4" />
                                                                         Lihat Detail
+                                                                    </Link>
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem asChild>
+                                                                    <Link href={route('orders.invoice', order.id)}>
+                                                                        <Printer className="mr-2 h-4 w-4" />
+                                                                        Cetak Nota / Invoice
                                                                     </Link>
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuItem onClick={() => openUpdateModal(order)}>

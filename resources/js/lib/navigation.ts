@@ -4,6 +4,7 @@ import { route } from 'ziggy-js';
 import {
     LayoutGrid,
     ShoppingBag,
+    Calendar,
     Package,
     Users,
     Star,
@@ -25,6 +26,12 @@ export const commerceNavItems: NavItem[] = [
         title: 'Pesanan',
         href: route('orders.index', undefined, false),
         icon: ShoppingBag,
+        featureKey: 'orders',
+    },
+    {
+        title: 'Jadwal Pengerjaan',
+        href: route('orders.calendar', undefined, false),
+        icon: Calendar,
         featureKey: 'orders',
     },
     {

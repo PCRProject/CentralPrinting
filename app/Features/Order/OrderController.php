@@ -3,11 +3,14 @@
 namespace App\Features\Order;
 
 use App\Features\Product\Product;
+use App\Features\Customer\Customer;
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
@@ -81,10 +84,14 @@ class OrderController extends Controller
     ];
 
     /**
-     * Show the checkout page for the customer.
+     * Show the checkout page for the customer or manual order form for admin.
      */
     public function create(Request $request)
     {
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            return $this->createAdmin($request);
+        }
+
         $request->validate([
             'selected_items' => 'sometimes|array',
             'selected_items.*' => 'string',
@@ -128,11 +135,14 @@ class OrderController extends Controller
     }
 
     /**
-     * Store a newly created order from the customer checkout.
-     * Returns JSON with snap_token for Midtrans payment.
+     * Store a newly created order from customer checkout or admin manual creation.
      */
     public function store(Request $request)
     {
+        if (auth()->check() && auth()->user()->role === 'admin') {
+            return $this->storeAdmin($request);
+        }
+
         $validated = $request->validate([
             'shipping_address.name' => 'required|string|max:255',
             'shipping_address.address' => 'required|string|max:500',
@@ -726,5 +736,203 @@ class OrderController extends Controller
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Show manual order creation page for Admin (POS / Walk-in / Phone).
+     */
+    protected function createAdmin(Request $request)
+    {
+        $products = Product::where('is_active', true)
+            ->orWhereNull('is_active')
+            ->with(['category', 'attributeValues.attribute', 'designTemplates'])
+            ->get();
+
+        $customers = Customer::with('user:id,name,email')
+            ->get()
+            ->map(function ($c) {
+                return [
+                    'id' => $c->id,
+                    'name' => $c->user->name ?? 'Pelanggan #' . $c->id,
+                    'email' => $c->user->email ?? '',
+                    'phone_number' => $c->phone_number ?? '',
+                    'address' => $c->address ?? '',
+                    'city' => $c->city ?? '',
+                ];
+            });
+
+        return Inertia::render('Features/Order/FormPage', [
+            'products' => $products,
+            'customers' => $customers,
+        ]);
+    }
+
+    /**
+     * Store manual order created by Admin.
+     */
+    protected function storeAdmin(Request $request)
+    {
+        $validated = $request->validate([
+            'customer_mode' => 'required|in:existing,new',
+            'customer_id' => 'required_if:customer_mode,existing|nullable|exists:customers,id',
+            'new_customer_name' => 'required_if:customer_mode,new|nullable|string|max:255',
+            'new_customer_phone' => 'required_if:customer_mode,new|nullable|string|max:30',
+            'new_customer_email' => 'nullable|email|max:255',
+            'new_customer_address' => 'nullable|string|max:500',
+            'order_source' => 'required|string|in:walk_in,whatsapp,phone,online,other',
+            'payment_method' => 'required|string',
+            'payment_status' => 'required|string|in:paid,unpaid',
+            'estimated_completion_date' => 'nullable|date',
+            'admin_notes' => 'nullable|string|max:1000',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id_produk',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.price' => 'required|numeric|min:0',
+            'items.*.variant' => 'nullable',
+            'items.*.note' => 'nullable|string|max:500',
+            'items.*.design_type' => 'nullable|string',
+            'items.*.design_template_id' => 'nullable',
+            'items.*.design_template_name' => 'nullable|string',
+            'items.*.design_template_thumb' => 'nullable|string',
+            'items.*.design_file' => 'nullable|file|max:25600', // 25MB max
+        ]);
+
+        $order = DB::transaction(function () use ($request, $validated) {
+            $customerId = null;
+            $customerName = '';
+            $customerPhone = '';
+            $customerAddress = '';
+
+            if ($validated['customer_mode'] === 'new') {
+                $email = !empty($validated['new_customer_email'])
+                    ? $validated['new_customer_email']
+                    : 'cust_' . time() . '_' . rand(100, 999) . '@centralprinting.local';
+
+                $user = User::firstOrCreate(
+                    ['email' => $email],
+                    [
+                        'name' => $validated['new_customer_name'],
+                        'password' => bcrypt('password123'),
+                        'role' => 'customer',
+                    ]
+                );
+
+                $customer = Customer::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'phone_number' => $validated['new_customer_phone'],
+                        'address' => $validated['new_customer_address'] ?: 'Datang Langsung (Walk-in)',
+                        'city' => 'Pekanbaru',
+                        'province' => 'Riau',
+                    ]
+                );
+                $customerId = $customer->id;
+                $customerName = $user->name;
+                $customerPhone = $customer->phone_number;
+                $customerAddress = $customer->address;
+            } else {
+                $customer = Customer::with('user')->findOrFail($validated['customer_id']);
+                $customerId = $customer->id;
+                $customerName = $customer->user->name ?? 'Pelanggan #' . $customer->id;
+                $customerPhone = $customer->phone_number ?? '-';
+                $customerAddress = $customer->address ?? 'Ambil di Toko (Pickup)';
+            }
+
+            // Calculate total price from items
+            $totalPrice = 0;
+            foreach ($validated['items'] as $item) {
+                $totalPrice += ((float) $item['price']) * ((int) $item['quantity']);
+            }
+
+            $order = Order::create([
+                'customer_id' => $customerId,
+                'order_status' => 'processing',
+                'total_price' => $totalPrice,
+                'shipping_cost' => 0,
+                'shipping_method' => 'Ambil di Toko (Pickup)',
+                'shipping_address' => [
+                    'name' => $customerName,
+                    'phone' => $customerPhone,
+                    'address' => $customerAddress ?: 'Ambil di Toko (Pickup)',
+                    'city' => 'Pekanbaru',
+                    'postal_code' => '-',
+                ],
+                'payment_method' => $validated['payment_method'],
+                'payment_status' => $validated['payment_status'],
+                'estimated_completion_date' => $validated['estimated_completion_date'] ?? null,
+                'admin_notes' => $validated['admin_notes'] ?? null,
+                'order_source' => $validated['order_source'] ?? 'walk_in',
+            ]);
+
+            // Save items
+            foreach ($validated['items'] as $index => $itemData) {
+                $designData = null;
+
+                // Handle design file upload
+                if ($request->hasFile("items.{$index}.design_file")) {
+                    $file = $request->file("items.{$index}.design_file");
+                    $originalName = $file->getClientOriginalName();
+                    $filename = time() . '_' . $index . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                    $path = $file->storeAs('designs', $filename, 'public');
+
+                    $designData = [
+                        'type' => 'upload',
+                        'value' => '/storage/' . $path,
+                        'original_filename' => $originalName,
+                    ];
+                } elseif (!empty($itemData['design_template_thumb'])) {
+                    $designData = [
+                        'type' => 'template',
+                        'value' => $itemData['design_template_thumb'],
+                        'original_filename' => $itemData['design_template_name'] ?? 'Template Desain',
+                    ];
+                }
+
+                $order->items()->create([
+                    'product_id_produk' => $itemData['product_id'],
+                    'quantity' => (int) $itemData['quantity'],
+                    'price' => (float) $itemData['price'],
+                    'options' => [
+                        'variant' => $itemData['variant'] ?? null,
+                        'design' => $designData,
+                        'note' => $itemData['note'] ?? null,
+                    ],
+                ]);
+            }
+
+            return $order;
+        });
+
+        return redirect()->route('orders.invoice', $order->id)->with('success', 'Pesanan berhasil dibuat! Nota siap dicetak.');
+    }
+
+    /**
+     * Render printable invoice for an order.
+     */
+    public function invoice(Order $order)
+    {
+        $order->load(['customer.user', 'items.product.category']);
+        
+        return Inertia::render('Features/Order/Invoice', [
+            'order' => $order,
+        ]);
+    }
+
+    /**
+     * Render production calendar for Admin.
+     */
+    public function calendar(Request $request)
+    {
+        $orders = Order::with(['customer.user', 'items.product'])
+            ->where(function ($q) {
+                $q->whereNotNull('estimated_completion_date')
+                  ->orWhere('created_at', '>=', now()->subDays(60));
+            })
+            ->latest('estimated_completion_date')
+            ->get();
+
+        return Inertia::render('Features/Order/Calendar', [
+            'orders' => $orders,
+        ]);
     }
 }

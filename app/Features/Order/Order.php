@@ -29,6 +29,7 @@ class Order extends Model
         'tracking_number',
         'estimated_completion_date',
         'admin_notes',
+        'order_source',
         // Midtrans payment fields
         'snap_token',
         'midtrans_order_id',

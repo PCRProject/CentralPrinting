@@ -173,6 +173,20 @@ Proyek ini menggunakan alur kerja semi-otomatis untuk mencatat perkembangan.
 *(Entri baru akan ditambahkan di sini oleh Asisten AI)*
 
 ### 15 Oktober 2026
+- **Fitur Baru: Pembuatan Pesanan Manual (POS / Kasir Walk-in & WhatsApp), Nota Transaksi, dan Kalender Produksi Admin**
+    -   **Database:** Membuat migrasi tabel `orders` untuk mendukung status order fleksibel (`order_status` varchar), alamat pengiriman opsional untuk pickup/walk-in (`shipping_address` nullable), dan kolom sumber pesanan (`order_source`).
+    -   **Backend (Model):** Memperbarui model `Order` dengan field `$fillable` `order_source`.
+    -   **Backend (Routing & Controller):**
+        -   Memperbarui `OrderController@create` dan `store` dengan deteksi role admin (`createAdmin` & `storeAdmin`).
+        -   Menyediakan data seluruh produk aktif beserta varian bahan/ukuran dan data pelanggan untuk admin.
+        -   Menangani pembuatan pelanggan baru instan (*walk-in* / nomor WhatsApp), upload file desain pelanggan langsung ke `storage/app/public/designs/`, kalkulasi harga dinamis, target selesai pengerjaan (`estimated_completion_date`), dan catatan admin (`admin_notes`).
+        -   Menambahkan rute dan controller method `/orders/{order}/invoice` untuk cetak nota resmi.
+        -   Menambahkan rute dan controller method `/orders/calendar` untuk kalender jadwal pengerjaan.
+    -   **Frontend (Form Pembuatan Pesanan Admin):** Membangun form lengkap pada `Order/FormPage.tsx` dengan pemilihan/pembuatan pelanggan instan, multi-item produk, seleksi varian bahan & kalkulasi harga realtime, unggah file desain atau pilih template, penentuan tanggal deadline pengerjaan, dan ringkasan pembayaran.
+    -   **Frontend (Cetak Nota Resmi):** Membangun komponen `Order/Invoice.tsx` dengan branding resmi Central Printing, nomor nota unik, tanggal order & deadline pengerjaan, tabel rincian bahan/ukuran, status stempel lunas/belum lunas, catatan operator, ketentuan pengambilan, dan optimasi `@media print` untuk cetak langsung ke printer atau simpan PDF.
+    -   **Frontend (Kalender Jadwal Pengerjaan):** Membangun komponen `Order/Calendar.tsx` dengan tampilan kalender bulanan interaktif, penanda deadline pengerjaan, indikator warna status, sidebar antrian prioritas deadline hari ini, dan modal quick-update status pengerjaan.
+    -   **Frontend (Navigasi & Header):** Menambahkan menu "Jadwal Pengerjaan" di sidebar admin (`navigation.ts`), tombol "Buat Pesanan Baru" dan "Jadwal Pengerjaan" di header daftar pesanan (`Order/Index.tsx`), serta tombol "Cetak Nota" di setiap baris aksi dan detail pesanan (`Order/Show.tsx`).
+
 - **Fitur Baru: Sistem Saklar Fitur Dinamis (Dynamic Feature Flags) di Pengaturan Admin**
     -   **Database:** Membuat migrasi tabel `app_settings` untuk menyimpan status switch aktif/nonaktif setiap modul sistem (`customer_portal`, `orders`, `products`, `customers`, `reviews`, `stores`).
     -   **Backend (Model & Cache):** Membuat model `AppSetting` dengan caching otomatis untuk pengecekan cepat `AppSetting::isEnabled()`.
