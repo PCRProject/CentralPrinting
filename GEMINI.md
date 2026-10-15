@@ -173,6 +173,16 @@ Proyek ini menggunakan alur kerja semi-otomatis untuk mencatat perkembangan.
 *(Entri baru akan ditambahkan di sini oleh Asisten AI)*
 
 ### 15 Oktober 2026
+- **Peningkatan Fitur: Varian Produk Dinamis & Live Kalkulasi Harga pada Pembuatan Pesanan Admin**
+    -   **Database (Seeder):** Membuat `ProductAttributeSeeder` dan menjalankannya untuk men-seed 150 relasi atribut dan varian percetakan realistis (Bahan, Ukuran, Finishing / Laminasi) ke tabel pivot `product_attribute_value` untuk seluruh 25 produk percetakan Central Printing, lengkap dengan tambahan harga delta masing-masing.
+    -   **Frontend (Form Pesanan Manual Admin):** 
+        -   Menambahkan helper `calculateItemPriceAndDefaultVariants` di `Order/FormPage.tsx` yang secara otomatis memilih varian default produk saat form pertama dibuka atau saat produk baru ditambahkan.
+        -   Memperbarui fungsi `handleProductChange` sehingga ketika admin beralih dari Produk A ke Produk B, opsi varian langsung berganti secara dinamis menyesuaikan atribut Produk B dan harga satuan otomatis dikalkulasi ulang.
+        -   Memperbarui fungsi `handleVariantChange` sehingga saat admin memilih varian dengan harga tambahan (misal bahan tebal atau laminasi khusus), harga satuan dan subtotal item langsung bertambah secara *real-time*.
+        -   Menambahkan visualisasi breakdown harga transparan: `[Harga Dasar] + [Tambahan Varian] = [Harga Satuan / pcs]`, serta badge total varian tersedia.
+        -   Menyediakan tampilan informatif fallback jika suatu produk kustom tidak memiliki konfigurasi varian di database.
+    -   **Autentikasi:** Memperbaiki form `auth/login.tsx` menggunakan `useForm` standar Inertia yang stabil dan bebas dari kendala runtime.
+
 - **Fitur Baru: Pembuatan Pesanan Manual (POS / Kasir Walk-in & WhatsApp), Nota Transaksi, dan Kalender Produksi Admin**
     -   **Database:** Membuat migrasi tabel `orders` untuk mendukung status order fleksibel (`order_status` varchar), alamat pengiriman opsional untuk pickup/walk-in (`shipping_address` nullable), dan kolom sumber pesanan (`order_source`).
     -   **Backend (Model):** Memperbarui model `Order` dengan field `$fillable` `order_source`.
